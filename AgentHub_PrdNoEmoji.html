@@ -1,0 +1,2932 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Hub - 完整原型</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+        
+        /* 导航栏 */
+        .navbar {
+            background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%);
+            color: white;
+            padding: 0 40px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(26, 54, 93, 0.3);
+        }
+        
+        .navbar-brand {
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .navbar-nav {
+            display: flex;
+            gap: 4px;
+            height: 100%;
+        }
+        
+        .nav-item {
+            padding: 0 16px;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 14px;
+            position: relative;
+        }
+        
+        .nav-item:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .nav-item.active {
+            background: rgba(255,255,255,0.15);
+        }
+        
+        .nav-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #38a169;
+        }
+        
+        .nav-item .icon {
+            margin-right: 6px;
+        }
+        
+        .navbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .upload-btn {
+            background: #38a169;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .upload-btn:hover {
+            background: #2f855a;
+            transform: translateY(-1px);
+        }
+        
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        /* 主内容区 */
+        .main-content {
+            padding-top: 60px;
+        }
+        
+        /* 搜索栏 */
+        .search-bar {
+            background: white;
+            padding: 16px 40px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .search-input-wrap {
+            flex: 1;
+            max-width: 500px;
+            position: relative;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 10px 16px 10px 40px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: #2c5282;
+            box-shadow: 0 0 0 3px rgba(44, 82, 130, 0.1);
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #a0aec0;
+        }
+        
+        /* Banner */
+        .banner {
+            position: relative;
+            height: 320px;
+            overflow: hidden;
+            background: linear-gradient(135deg, #1a365d 0%, #2c5282 50%, #3182ce 100%);
+        }
+        
+        .banner-slides {
+            height: 100%;
+            display: flex;
+            transition: transform 0.5s ease;
+        }
+        
+        .banner-slide {
+            min-width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            padding: 0 80px;
+        }
+        
+        .banner-content {
+            max-width: 600px;
+            color: white;
+        }
+        
+        .banner-tag {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .banner-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+        
+        .banner-desc {
+            font-size: 15px;
+            line-height: 1.7;
+            opacity: 0.9;
+        }
+        
+        .banner-indicators {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+        }
+        
+        .banner-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.4);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .banner-dot.active {
+            background: white;
+            width: 24px;
+            border-radius: 5px;
+        }
+        
+        /* 资产类型模块 */
+        .asset-sections {
+            padding: 40px;
+        }
+        
+        .asset-section {
+            margin-bottom: 48px;
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section-title h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1a365d;
+        }
+        
+        .section-title .icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+        
+        .section-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .refresh-btn {
+            background: white;
+            border: 1px solid #e2e8f0;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s;
+        }
+        
+        .refresh-btn:hover {
+            border-color: #2c5282;
+            color: #2c5282;
+        }
+        
+        .more-link {
+            color: #2c5282;
+            font-size: 14px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .more-link:hover {
+            text-decoration: underline;
+        }
+        
+        /* 卡片网格 */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+        
+        .asset-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .asset-card:hover {
+            border-color: #2c5282;
+            box-shadow: 0 4px 12px rgba(44, 82, 130, 0.15);
+            transform: translateY(-2px);
+        }
+        
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .card-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        
+        .card-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .card-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1a365d;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .card-tags {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+        
+        .card-tag {
+            padding: 2px 8px;
+            background: #edf2f7;
+            border-radius: 4px;
+            font-size: 11px;
+            color: #4a5568;
+        }
+        
+        .card-desc {
+            font-size: 13px;
+            color: #718096;
+            line-height: 1.5;
+            margin-bottom: 12px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+        }
+        
+        .card-footer-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #718096;
+        }
+        
+        .card-footer-left span {
+            color: #718096;
+        }
+        
+        .card-rating {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: #d69e2e;
+        }
+        
+        /* 颜色映射 */
+        .color-agent { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .color-plugin { background: linear-gradient(135deg, #319795, #38b2ac); }
+        .color-skill { background: linear-gradient(135deg, #805ad5, #9f7aea); }
+        .color-mcp { background: linear-gradient(135deg, #d69e2e, #ecc94b); }
+        .color-rules { background: linear-gradient(135deg, #e53e3e, #fc8181); }
+        .color-command { background: linear-gradient(135deg, #718096, #a0aec0); }
+        .color-best { background: linear-gradient(135deg, #38a169, #48bb78); }
+        
+        /* 广场页面 */
+        .square-page {
+            display: none;
+        }
+        
+        .square-page.active {
+            display: block;
+        }
+        
+        .square-banner {
+            height: 200px;
+            background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%);
+            display: flex;
+            align-items: center;
+            padding: 0 80px;
+            color: white;
+        }
+        
+        .square-banner-title {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .square-banner-desc {
+            font-size: 15px;
+            opacity: 0.9;
+            max-width: 500px;
+        }
+        
+        /* 管理后台 */
+        .admin-page {
+            display: none;
+        }
+        
+        .admin-page.active {
+            display: block;
+        }
+        
+        .admin-header {
+            background: white;
+            padding: 20px 40px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .admin-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 16px;
+        }
+        
+        .admin-tab {
+            padding: 8px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #edf2f7;
+            color: #4a5568;
+        }
+        
+        .admin-tab.active {
+            background: #2c5282;
+            color: white;
+        }
+        
+        .admin-filters {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .filter-select {
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 13px;
+            min-width: 120px;
+        }
+        
+        .admin-table {
+            width: 100%;
+            background: white;
+            border-collapse: collapse;
+        }
+        
+        .admin-table th,
+        .admin-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 13px;
+        }
+        
+        .admin-table th {
+            background: #f7fafc;
+            font-weight: 600;
+            color: #4a5568;
+        }
+        
+        .admin-table tr:hover {
+            background: #f7fafc;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .status-pass { background: #c6f6d5; color: #276749; }
+        .status-fail { background: #fed7d7; color: #c53030; }
+        .status-scanning { background: #feebc8; color: #c05621; }
+        .status-published { background: #c6f6d5; color: #276749; }
+        .status-unpublished { background: #e2e8f0; color: #4a5568; }
+        
+        .action-btn {
+            padding: 4px 8px;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-right: 4px;
+            transition: all 0.2s;
+        }
+        
+        .action-btn.edit {
+            background: #ebf8ff;
+            color: #2b6cb0;
+        }
+        
+        .action-btn.edit:hover {
+            background: #bee3f8;
+        }
+        
+        .action-btn.delete {
+            background: #fff5f5;
+            color: #c53030;
+        }
+        
+        .action-btn.delete:hover {
+            background: #fed7d7;
+        }
+        
+        .action-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        
+        /* 上传弹窗 */
+        .upload-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+        }
+        
+        .upload-modal.show {
+            display: flex;
+        }
+        
+        .upload-modal-content {
+            background: white;
+            border-radius: 16px;
+            width: 95%;
+            max-width: 1000px;
+            max-height: 90vh;
+            overflow: auto;
+        }
+        
+        .upload-modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .upload-modal-header h3 {
+            font-size: 18px;
+            color: #1a365d;
+        }
+        
+        .close-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            border: none;
+            background: #edf2f7;
+            cursor: pointer;
+            font-size: 18px;
+            color: #4a5568;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .close-btn:hover {
+            background: #e2e8f0;
+        }
+        
+        /* 成功弹窗 */
+        .success-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 300;
+        }
+        
+        .success-modal.show {
+            display: flex;
+        }
+        
+        .success-modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+        
+        .success-modal-icon {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #38a169, #48bb78);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 32px;
+            color: white;
+        }
+        
+        .success-modal h3 {
+            font-size: 20px;
+            color: #1a365d;
+            margin-bottom: 8px;
+        }
+        
+        .success-modal p {
+            font-size: 14px;
+            color: #718096;
+            margin-bottom: 24px;
+        }
+        
+        .success-modal-btn {
+            width: 100%;
+            padding: 14px 24px;
+            background: #2c5282;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .success-modal-btn:hover {
+            background: #1a365d;
+        }
+        
+        /* 详情页 */
+        .detail-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 300;
+            padding: 20px;
+        }
+        
+        .detail-modal.show {
+            display: flex;
+        }
+        
+        .detail-content {
+            background: white;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow: auto;
+        }
+        
+        .detail-header {
+            padding: 24px 28px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 1;
+        }
+        
+        .detail-header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .detail-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 700;
+            color: white;
+        }
+        
+        .detail-title-wrap {
+            flex: 1;
+        }
+        
+        .detail-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1a365d;
+            margin-bottom: 8px;
+        }
+        
+        .detail-meta {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 13px;
+            color: #718096;
+        }
+        
+        .detail-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .detail-close {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: none;
+            background: #edf2f7;
+            cursor: pointer;
+            font-size: 20px;
+            color: #4a5568;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        
+        .detail-close:hover {
+            background: #e2e8f0;
+        }
+        
+        .detail-body {
+            padding: 28px;
+        }
+        
+        .detail-section {
+            margin-bottom: 28px;
+        }
+        
+        .detail-section:last-child {
+            margin-bottom: 0;
+        }
+        
+        .detail-section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .detail-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .detail-tag {
+            padding: 6px 14px;
+            background: #edf2f7;
+            color: #4a5568;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        
+        .detail-desc {
+            font-size: 15px;
+            line-height: 1.8;
+            color: #2d3748;
+            background: #f7fafc;
+            padding: 16px 20px;
+            border-radius: 10px;
+            border-left: 4px solid #2c5282;
+        }
+        
+        .detail-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+        
+        .detail-stat-card {
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .detail-stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #2c5282;
+            margin-bottom: 4px;
+        }
+        
+        .detail-stat-label {
+            font-size: 12px;
+            color: #718096;
+        }
+        
+        .detail-info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+        
+        .detail-info-item {
+            background: #f7fafc;
+            padding: 16px;
+            border-radius: 10px;
+        }
+        
+        .detail-info-label {
+            font-size: 12px;
+            color: #718096;
+            margin-bottom: 4px;
+        }
+        
+        .detail-info-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+        
+        .detail-footer {
+            padding: 20px 28px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            position: sticky;
+            bottom: 0;
+            background: white;
+        }
+        
+        .detail-btn {
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .detail-btn-secondary {
+            background: #edf2f7;
+            color: #4a5568;
+            border: none;
+        }
+        
+        .detail-btn-secondary:hover {
+            background: #e2e8f0;
+        }
+        
+        .detail-btn-primary {
+            background: #2c5282;
+            color: white;
+            border: none;
+        }
+        
+        .detail-btn-primary:hover {
+            background: #1a365d;
+        }
+        
+        /* 排序按钮 */
+        .sort-btn {
+            padding: 8px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s;
+            background: white;
+            color: #4a5568;
+        }
+
+        .sort-btn:hover {
+            border-color: #2c5282;
+            color: #2c5282;
+        }
+
+        .sort-btn.active {
+            background: #2c5282;
+            border-color: #2c5282;
+            color: white;
+        }
+
+        .sort-btn.active:hover {
+            background: #1a365d;
+            border-color: #1a365d;
+        }
+
+        .sort-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* 隐藏首页 */
+        .home-page {
+            display: block;
+        }
+        
+        .home-page.hidden {
+            display: none;
+        }
+
+        /* ===== PRD 侧边栏 ===== */
+        .app-layout {
+            display: flex;
+            padding-top: 60px;
+            min-height: 100vh;
+        }
+
+        .app-layout .main-content {
+            padding-top: 0;
+            flex: 1;
+            min-width: 0;
+            transition: margin-right 0.3s ease;
+        }
+
+        /* 侧边栏触发按钮（悬浮在右侧，竖条形） */
+        .prd-toggle-btn {
+            position: fixed;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 150;
+            background: linear-gradient(180deg, #2c5282 0%, #1a365d 100%);
+            color: white;
+            border: none;
+            border-radius: 8px 0 0 8px;
+            width: 100px;
+            height: 50px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 700;
+            writing-mode: horizontal-tb;
+            text-orientation: mixed;
+            box-shadow: -3px 0 10px rgba(44,82,130,0.2);
+            transition: all 0.25s ease;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            letter-spacing: 1px;
+        }
+
+        .prd-toggle-btn:hover {
+            background: linear-gradient(180deg, #3182ce 0%, #2c5282 100%);
+            box-shadow: -4px 0 16px rgba(44,82,130,0.35);
+        }
+
+        .prd-toggle-btn .toggle-icon {
+            font-size: 16px;
+            writing-mode: horizontal-tb;
+        }
+
+        /* PRD侧边栏面板 */
+        .prd-sidebar {
+            position: fixed;
+            right: -520px;
+            top: 60px;
+            bottom: 0;
+            width: 520px;
+            background: #fff;
+            border-left: 1px solid #e2e8f0;
+            z-index: 140;
+            display: flex;
+            flex-direction: column;
+            transition: right 0.35s cubic-bezier(0.4,0,0.2,1);
+            box-shadow: -4px 0 20px rgba(0,0,0,0.1);
+        }
+
+        .prd-sidebar.open {
+            right: 0;
+        }
+
+        .prd-sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%);
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .prd-sidebar-header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .prd-sidebar-header h3 {
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .prd-sidebar-header .prd-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .prd-close-btn {
+            width: 30px;
+            height: 30px;
+            background: rgba(255,255,255,0.15);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .prd-close-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        /* 目录导航 */
+        .prd-toc {
+            display: flex;
+            gap: 4px;
+            padding: 10px 16px;
+            background: #f7fafc;
+            border-bottom: 1px solid #e2e8f0;
+            overflow-x: auto;
+            flex-shrink: 0;
+        }
+
+        .prd-toc::-webkit-scrollbar {
+            height: 0;
+        }
+
+        .prd-toc-item {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            white-space: nowrap;
+            color: #4a5568;
+            background: white;
+            border: 1px solid #e2e8f0;
+            transition: all 0.15s;
+        }
+
+        .prd-toc-item:hover,
+        .prd-toc-item.active {
+            background: #2c5282;
+            color: white;
+            border-color: #2c5282;
+        }
+
+        /* 内容区 */
+        .prd-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0;
+        }
+
+        .prd-body::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .prd-body::-webkit-scrollbar-track {
+            background: #f7fafc;
+        }
+
+        .prd-body::-webkit-scrollbar-thumb {
+            background: #cbd5e0;
+            border-radius: 4px;
+        }
+
+        /* PRD 内容块 */
+        .prd-section {
+            border-bottom: 1px solid #edf2f7;
+        }
+
+        .prd-section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 20px;
+            cursor: pointer;
+            background: #f8fafc;
+            transition: background 0.15s;
+            user-select: none;
+        }
+
+        .prd-section-header:hover {
+            background: #edf2f7;
+        }
+
+        .prd-section-header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .prd-section-num {
+            width: 24px;
+            height: 24px;
+            background: #2c5282;
+            color: white;
+            border-radius: 50%;
+            font-size: 11px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .prd-section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a365d;
+        }
+
+        .prd-section-arrow {
+            color: #a0aec0;
+            font-size: 12px;
+            transition: transform 0.2s;
+        }
+
+        .prd-section-arrow.open {
+            transform: rotate(90deg);
+        }
+
+        .prd-section-body {
+            display: none;
+            padding: 16px 20px;
+            background: white;
+        }
+
+        .prd-section-body.open {
+            display: block;
+        }
+
+        /* 正文文字 */
+        .prd-text {
+            font-size: 13px;
+            color: #2d3748;
+            line-height: 1.8;
+            margin-bottom: 12px;
+        }
+
+        .prd-text:last-child {
+            margin-bottom: 0;
+        }
+
+        /* 亮点标注 */
+        .prd-highlight {
+            background: #fffbeb;
+            border-left: 3px solid #d69e2e;
+            padding: 10px 14px;
+            border-radius: 0 6px 6px 0;
+            margin: 10px 0;
+            font-size: 13px;
+            color: #744210;
+            line-height: 1.7;
+        }
+
+        .prd-note {
+            background: #ebf8ff;
+            border-left: 3px solid #3182ce;
+            padding: 10px 14px;
+            border-radius: 0 6px 6px 0;
+            margin: 10px 0;
+            font-size: 13px;
+            color: #2c5282;
+            line-height: 1.7;
+        }
+
+        .prd-warn {
+            background: #fff5f5;
+            border-left: 3px solid #e53e3e;
+            padding: 10px 14px;
+            border-radius: 0 6px 6px 0;
+            margin: 10px 0;
+            font-size: 13px;
+            color: #c53030;
+            line-height: 1.7;
+        }
+
+        /* 版本表格 */
+        .prd-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+            font-size: 12px;
+        }
+
+        .prd-table th {
+            background: #edf2f7;
+            padding: 8px 10px;
+            text-align: left;
+            font-weight: 600;
+            color: #4a5568;
+            border: 1px solid #e2e8f0;
+        }
+
+        .prd-table td {
+            padding: 7px 10px;
+            border: 1px solid #e2e8f0;
+            color: #2d3748;
+            vertical-align: top;
+        }
+
+        .prd-table tr:nth-child(even) td {
+            background: #f7fafc;
+        }
+
+        /* 资产类型标签行 */
+        .prd-asset-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px dashed #edf2f7;
+        }
+
+        .prd-asset-row:last-child {
+            border-bottom: none;
+        }
+
+        .prd-asset-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .prd-asset-badge.agent { background: #e9d8fd; color: #553c9a; }
+        .prd-asset-badge.plugin { background: #b2f5ea; color: #1d4044; }
+        .prd-asset-badge.skill { background: #e9d8fd; color: #6b21a8; }
+        .prd-asset-badge.mcp { background: #fefcbf; color: #744210; }
+        .prd-asset-badge.rules { background: #fed7d7; color: #c53030; }
+        .prd-asset-badge.command { background: #e2e8f0; color: #2d3748; }
+        .prd-asset-badge.best { background: #c6f6d5; color: #22543d; }
+
+        .prd-asset-desc {
+            font-size: 12px;
+            color: #4a5568;
+            line-height: 1.6;
+        }
+
+        /* 角色权限 */
+        .prd-role-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            margin: 10px 0;
+        }
+
+        .prd-role-card {
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .prd-role-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 6px;
+        }
+
+        .prd-role-item {
+            font-size: 11px;
+            color: #718096;
+            line-height: 1.5;
+            text-align: left;
+        }
+
+        /* 版本规划标签 */
+        .prd-version-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            margin-right: 4px;
+        }
+
+        .prd-version-v1 { background: #c6f6d5; color: #276749; }
+        .prd-version-v2 { background: #bee3f8; color: #2b6cb0; }
+
+        /* 功能清单 */
+        .prd-checklist {
+            list-style: none;
+            padding: 0;
+            margin: 8px 0;
+        }
+
+        .prd-checklist li {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            font-size: 12px;
+            color: #2d3748;
+            line-height: 1.6;
+            padding: 4px 0;
+        }
+
+        .prd-checklist li::before {
+            content: '▸';
+            color: #2c5282;
+            font-size: 11px;
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        /* 模块子标题 */
+        .prd-sub-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #2c5282;
+            margin: 14px 0 8px 0;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* 状态规则说明 */
+        .prd-status-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin: 8px 0;
+        }
+
+        .prd-status-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            font-size: 12px;
+            color: #4a5568;
+            line-height: 1.5;
+        }
+
+        .prd-status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-top: 4px;
+        }
+
+        .dot-pass { background: #38a169; }
+        .dot-fail { background: #e53e3e; }
+        .dot-scanning { background: #d69e2e; }
+        .dot-published { background: #3182ce; }
+        .dot-unpublished { background: #a0aec0; }
+
+        /* 遮罩层 */
+        .prd-overlay {
+            display: none;
+            position: fixed;
+            top: 60px;
+            left: 0;
+            right: 520px;
+            bottom: 0;
+            background: rgba(0,0,0,0.15);
+            z-index: 135;
+        }
+
+        .prd-overlay.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="navbar-brand">
+            <span></span>
+            <span>Agent Hub</span>
+        </div>
+        <div class="navbar-nav">
+            <div class="nav-item active" data-page="home">
+                <span>首页</span>
+            </div>
+            <div class="nav-item" data-page="agent">
+                <span>Agent</span>
+            </div>
+            <div class="nav-item" data-page="plugin">
+                <span>Plugin</span>
+            </div>
+            <div class="nav-item" data-page="skill">
+                <span>Skill</span>
+            </div>
+            <div class="nav-item" data-page="mcp">
+                <span>MCP</span>
+            </div>
+            <div class="nav-item" data-page="rules">
+                <span>Rules</span>
+            </div>
+            <div class="nav-item" data-page="command">
+                <span>Command</span>
+            </div>
+            <div class="nav-item" data-page="best">
+                <span>最佳实践</span>
+            </div>
+            <div class="nav-item" data-page="admin">
+                <span>管理后台</span>
+            </div>
+        </div>
+        <div class="navbar-actions">
+            <button class="upload-btn" onclick="openUploadModal()">
+                上传组件
+            </button>
+            <div class="user-avatar">T</div>
+        </div>
+    </nav>
+    
+    <!-- PRD侧边栏遮罩 -->
+    <div class="prd-overlay" id="prdOverlay" onclick="closePrdSidebar()"></div>
+
+    <!-- PRD侧边栏触发按钮 -->
+    <button class="prd-toggle-btn" id="prdToggleBtn" onclick="togglePrdSidebar()" title="查看 PRD 文档">
+        <span>PRD</span>
+    </button>
+
+    <!-- PRD侧边栏面板 -->
+    <div class="prd-sidebar" id="prdSidebar">
+        <div class="prd-sidebar-header">
+            <div class="prd-sidebar-header-left">
+                <h3>Agent Hub · 产品需求文档</h3>
+                <span class="prd-badge">v1.0</span>
+            </div>
+            <button class="prd-close-btn" onclick="closePrdSidebar()">×</button>
+        </div>
+
+        <!-- 目录导航 -->
+        <div class="prd-toc" id="prdToc">
+            <div class="prd-toc-item active" onclick="scrollToPrdSection('bg')">背景</div>
+            <div class="prd-toc-item" onclick="scrollToPrdSection('overview')">概要说明</div>
+            <div class="prd-toc-item" onclick="scrollToPrdSection('home')">首页</div>
+            <div class="prd-toc-item" onclick="scrollToPrdSection('upload')">上传/编辑</div>
+            <div class="prd-toc-item" onclick="scrollToPrdSection('square')">组件广场</div>
+            <div class="prd-toc-item" onclick="scrollToPrdSection('detail')">组件详情</div>
+            <div class="prd-toc-item" onclick="scrollToPrdSection('admin')">管理后台</div>
+        </div>
+
+        <!-- PRD正文内容 -->
+        <div class="prd-body" id="prdBody">
+
+            <!-- 1. 背景 -->
+            <div class="prd-section" id="prd-bg">
+                <div class="prd-section-header" onclick="togglePrdSection(this)">
+                    <div class="prd-section-header-left">
+                        <div class="prd-section-num">1</div>
+                        <div class="prd-section-title">背景</div>
+                    </div>
+                    <span class="prd-section-arrow open"></span>
+                </div>
+                <div class="prd-section-body open">
+                    <p class="prd-text">帮助企业完成 AI 能力共享及建设，平台覆盖 Agent 相关拓展项组件，包含 <strong>Agent、Plugin、Skill、MCP、Rules、Command、最佳实践</strong>。</p>
+
+                    <div class="prd-sub-title">上线版本</div>
+                    <table class="prd-table">
+                        <thead>
+                            <tr>
+                                <th>企业专业版（SaaS）</th>
+                                <th>企业旗舰版（SaaS）</th>
+                                <th>企业专属版（VPC/混合云/私有化）</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>基础功能</td>
+                                <td>Deepwiki · AI 资产中心 · 海外模型</td>
+                                <td>全部功能定制</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="prd-sub-title">版本规划</div>
+                    <div class="prd-text">
+                        <span class="prd-version-badge prd-version-v1">V1.0</span> 实现控制台和插件端市场的打通<br>
+                        <span class="prd-version-badge prd-version-v2">V2.0</span> 组件评分、用量等数据评估统计功能 + 在线创建功能
+                    </div>
+
+                    <div class="prd-warn">遗留问题：已有组织/个人指令的用户数据迁移</div>
+                </div>
+            </div>
+
+            <!-- 2. 概要说明 -->
+            <div class="prd-section" id="prd-overview">
+                <div class="prd-section-header" onclick="togglePrdSection(this)">
+                    <div class="prd-section-header-left">
+                        <div class="prd-section-num">2</div>
+                        <div class="prd-section-title">概要说明</div>
+                    </div>
+                    <span class="prd-section-arrow open"></span>
+                </div>
+                <div class="prd-section-body open">
+                    <div class="prd-highlight">核心流程：所有人都可以上传资产，资产经安全扫描 + 企业规则过滤后，由管理员审核发布上架。</div>
+
+                    <div class="prd-sub-title">资产类型 & 安全规则</div>
+                    <div class="prd-asset-row">
+                        <span class="prd-asset-badge agent">Agent</span>
+                        <div class="prd-asset-desc">企业安全规则过滤；需联动插件端 · Subagent 需新增 Agent 广场</div>
+                    </div>
+                    <div class="prd-asset-row">
+                        <span class="prd-asset-badge plugin">Plugin</span>
+                        <div class="prd-asset-desc">代码扫描 + 企业安全规则过滤；tanzeng 已规划 Plugin 广场</div>
+                    </div>
+                    <div class="prd-asset-row">
+                        <span class="prd-asset-badge skill">Skill</span>
+                        <div class="prd-asset-desc">代码扫描 + 企业安全规则过滤；插件端开发中，hongyu 已规划 Skill 广场</div>
+                    </div>
+                    <div class="prd-asset-row">
+                        <span class="prd-asset-badge mcp">MCP</span>
+                        <div class="prd-asset-desc">代码扫描 + 企业安全规则过滤；需联动插件端 · 无需更改</div>
+                    </div>
+                    <div class="prd-asset-row">
+                        <span class="prd-asset-badge rules">Rules</span>
+                        <div class="prd-asset-desc">企业安全规则过滤；需联动插件端 · Rules 需新增 Rules 广场</div>
+                    </div>
+                    <div class="prd-asset-row">
+                        <span class="prd-asset-badge command">Command</span>
+                        <div class="prd-asset-desc">企业安全规则过滤；需联动插件端 · Command 需新增 Command 广场</div>
+                    </div>
+                    <div class="prd-asset-row">
+                        <span class="prd-asset-badge best">最佳实践</span>
+                        <div class="prd-asset-desc">企业安全规则过滤；无需联动插件端</div>
+                    </div>
+
+                    <div class="prd-note">本功能无部门概念，所有人均可上传。通过安全规则扫描后，管理员确认发布后正式上架市场。<br><strong>注意：每次编辑行为都刷新列表字段，重新进行扫描。</strong></div>
+
+                    <div class="prd-sub-title">角色权限</div>
+                    <div class="prd-role-grid">
+                        <div class="prd-role-card">
+                            <div class="prd-role-name">企业管理员</div>
+                            <div class="prd-role-item">创建<br>审核企业内全部数据<br>编辑/删除企业内全部数据</div>
+                        </div>
+                        <div class="prd-role-card">
+                            <div class="prd-role-name">部门管理员</div>
+                            <div class="prd-role-item">创建<br>审核所管部门数据<br>编辑/删除所管部门数据</div>
+                        </div>
+                        <div class="prd-role-card">
+                            <div class="prd-role-name">成员</div>
+                            <div class="prd-role-item">创建<br>无审核权限<br>编辑/删除自己的数据</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3.1 首页 -->
+            <div class="prd-section" id="prd-home">
+                <div class="prd-section-header" onclick="togglePrdSection(this)">
+                    <div class="prd-section-header-left">
+                        <div class="prd-section-num" style="background:#38a169;">3.1</div>
+                        <div class="prd-section-title">详细需求 · 首页</div>
+                    </div>
+                    <span class="prd-section-arrow"></span>
+                </div>
+                <div class="prd-section-body">
+                    <div class="prd-sub-title"> 顶部导航（吸顶）</div>
+                    <ul class="prd-checklist">
+                        <li>首页：7大AI资产的集中呈现 + banner 位</li>
+                        <li>Agent / Plugin / Skill / MCP / Rules / Command 专题广场</li>
+                        <li>最佳实践中心 · 管理后台</li>
+                    </ul>
+
+                    <div class="prd-sub-title"> Banner</div>
+                    <ul class="prd-checklist">
+                        <li>7种底图展示：Agent、Plugin、Skill、MCP、Rules、Command、最佳实践</li>
+                        <li>自动轮播间隔：<strong>5秒</strong></li>
+                        <li>支持手动切换（底部指示点）</li>
+                        <li>点击 Banner 跳转对应 tab 专题页面</li>
+                    </ul>
+
+                    <div class="prd-sub-title"> 卡片字段</div>
+                    <table class="prd-table">
+                        <thead><tr><th>字段</th><th>规则</th><th>示例</th></tr></thead>
+                        <tbody>
+                            <tr><td>头像</td><td>默认/手动上传</td><td>—</td></tr>
+                            <tr><td>标题</td><td>name 字段，最多60字符</td><td>AgentCodeHelper</td></tr>
+                            <tr><td>标签</td><td>最多3个</td><td>[代码][助手][IM]</td></tr>
+                            <tr><td>描述</td><td>description 前100字符</td><td>这是一个强大的…</td></tr>
+                            <tr><td>作者</td><td>上传者用户名</td><td>张三丰</td></tr>
+                            <tr><td>更新时间</td><td>审核发布时间 YYYY-MM-DD</td><td>2026-04-01</td></tr>
+                            <tr><td>评分</td><td>平均分保留1位小数，满分5分</td><td>⭐ 4.8</td></tr>
+                        </tbody>
+                    </table>
+
+                    <div class="prd-sub-title"> 操作</div>
+                    <ul class="prd-checklist">
+                        <li>搜索框：按作者用户名/组件名/描述模糊搜索【全局】</li>
+                        <li>上传组件：进入审批流程</li>
+                        <li>换一换：随机更换；推荐逻辑：评分 + 更新时间权重</li>
+                        <li>查看更多：跳转对应 tab 专题页面</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 3.2 上传/编辑 -->
+            <div class="prd-section" id="prd-upload">
+                <div class="prd-section-header" onclick="togglePrdSection(this)">
+                    <div class="prd-section-header-left">
+                        <div class="prd-section-num" style="background:#805ad5;">3.2</div>
+                        <div class="prd-section-title">详细需求 · 上传 / 编辑组件</div>
+                    </div>
+                    <span class="prd-section-arrow"></span>
+                </div>
+                <div class="prd-section-body">
+                    <div class="prd-sub-title"> 上传流程</div>
+                    <ul class="prd-checklist">
+                        <li>选择资产类型（左侧面板）</li>
+                        <li>上传文件（拖拽/点击）</li>
+                        <li>确认/编辑名称和描述</li>
+                        <li>选择标签（0-3个）</li>
+                        <li>点击「提交审核」</li>
+                    </ul>
+                    <div class="prd-note">上传成功后弹窗提示，引导跳转「管理后台 - 我创建的」Tab 页</div>
+
+                    <div class="prd-sub-title"> 标签选择规则</div>
+                    <ul class="prd-checklist">
+                        <li>最少选择：0个 · 最多选择：3个</li>
+                        <li>已选3个时禁用剩余标签</li>
+                    </ul>
+
+                    <div class="prd-sub-title"> 自动解析逻辑</div>
+                    <div class="prd-text">
+                        Agent / Plugin / Skill / MCP / Command：上传 JSON/YAML 配置文件后，自动提取 <code style="background:#edf2f7;padding:1px 5px;border-radius:3px;">name</code> 和 <code style="background:#edf2f7;padding:1px 5px;border-radius:3px;">description</code> 字段。
+                    </div>
+                    <div class="prd-text">Rules / 最佳实践：无法提取名称和描述字段，需手动填写。</div>
+                    <div class="prd-highlight">兜底策略：解析后用户可以编辑「名称和描述」，不影响正文内容，仅作为卡片数据呈现。</div>
+
+                    <div class="prd-sub-title"> 编辑组件</div>
+                    <div class="prd-warn"> 注意：组件的编辑和删除操作仅在管理后台处理。编辑弹窗默认回填旧版本信息，用户重新上传 ZIP 后进行二次解析，重新进行扫描和发布流程。</div>
+                </div>
+            </div>
+
+            <!-- 3.3 组件广场 -->
+            <div class="prd-section" id="prd-square">
+                <div class="prd-section-header" onclick="togglePrdSection(this)">
+                    <div class="prd-section-header-left">
+                        <div class="prd-section-num" style="background:#d69e2e;">3.3</div>
+                        <div class="prd-section-title">详细需求 · 组件广场</div>
+                    </div>
+                    <span class="prd-section-arrow"></span>
+                </div>
+                <div class="prd-section-body">
+                    <ul class="prd-checklist">
+                        <li>点击顶部导航进入专题广场</li>
+                        <li>固定 Banner，无滑动更换逻辑</li>
+                        <li>搜索框：按作者用户名/组件名/描述模糊搜索</li>
+                        <li>上传组件入口</li>
+                        <li>翻页：每页展示 <strong>4×5 条</strong>，超出进行翻页</li>
+                        <li>卡片仅展示当前类型组件</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 3.4 组件详情 -->
+            <div class="prd-section" id="prd-detail">
+                <div class="prd-section-header" onclick="togglePrdSection(this)">
+                    <div class="prd-section-header-left">
+                        <div class="prd-section-num" style="background:#e53e3e;">3.4</div>
+                        <div class="prd-section-title">详细需求 · 组件详情预览</div>
+                    </div>
+                    <span class="prd-section-arrow"></span>
+                </div>
+                <div class="prd-section-body">
+                    <div class="prd-text">用户在任意页面点击组件卡片 / 管理后台列表页点击组件名称，可以查看组件详情。</div>
+
+                    <div class="prd-sub-title"> 评分计算逻辑</div>
+                    <div class="prd-status-list">
+                        <div class="prd-status-item">
+                            <div class="prd-status-dot dot-scanning"></div>
+                            <div>0人评分：显示「暂无评分」</div>
+                        </div>
+                        <div class="prd-status-item">
+                            <div class="prd-status-dot dot-pass"></div>
+                            <div>一人/多人：累计总分（含0.5分）/ 评分用户数；粒度：半星</div>
+                        </div>
+                    </div>
+
+                    <div class="prd-sub-title"> 下载</div>
+                    <div class="prd-text">用户点击下载，将组件 ZIP 压缩包下载，文件名为组件名称。</div>
+
+                    <div class="prd-sub-title"> 组件内容渲染</div>
+                    <ul class="prd-checklist">
+                        <li>参考 GitHub 文件树样式渲染目录结构</li>
+                        <li>文件列表有搜索框，支持输入文件名称搜索</li>
+                        <li>支持点击文件名切换查看文件内容</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 3.5 管理后台 -->
+            <div class="prd-section" id="prd-admin">
+                <div class="prd-section-header" onclick="togglePrdSection(this)">
+                    <div class="prd-section-header-left">
+                        <div class="prd-section-num" style="background:#718096;">3.5</div>
+                        <div class="prd-section-title">详细需求 · 管理后台</div>
+                    </div>
+                    <span class="prd-section-arrow"></span>
+                </div>
+                <div class="prd-section-body">
+                    <div class="prd-sub-title">数据可见范围</div>
+                    <ul class="prd-checklist">
+                        <li>企业管理员：可审核企业内全部数据</li>
+                        <li>部门管理员：可审核所管理部门成员的数据</li>
+                        <li>成员：仅可创建数据，等待管理员审核</li>
+                    </ul>
+
+                    <div class="prd-sub-title"> Tab 标签页</div>
+                    <div class="prd-text">
+                        <strong>管理员 Tab：</strong>「全部」展示权限内所有组件；「我创建的」仅展示当前用户创建的<br>
+                        <strong>成员 Tab：</strong>「我创建的」展示当前用户全部组件
+                    </div>
+
+                    <div class="prd-sub-title"> 筛选区</div>
+                    <ul class="prd-checklist">
+                        <li>类型：Agent / Plugin / Skill / MCP / Rules / Command / 最佳实践</li>
+                        <li>扫描状态：通过 / 失败 / 扫描中</li>
+                        <li>发布状态：- / 已发布 / 未发布</li>
+                        <li>搜索框：组件名称 / 用户名 / 邮箱模糊搜索</li>
+                        <li>批量发布 & 批量删除：需二次确认弹窗</li>
+                    </ul>
+
+                    <div class="prd-sub-title">字段展示规则</div>
+                    <div class="prd-status-list">
+                        <div class="prd-status-item">
+                            <div class="prd-status-dot dot-scanning"></div>
+                            <div><strong>扫描中</strong>：状态显示「扫描中」，扫描完成时间显示「-」</div>
+                        </div>
+                        <div class="prd-status-item">
+                            <div class="prd-status-dot dot-pass"></div>
+                            <div><strong>扫描通过</strong>：显示实际完成时间，可进行发布操作</div>
+                        </div>
+                        <div class="prd-status-item">
+                            <div class="prd-status-dot dot-fail"></div>
+                            <div><strong>扫描失败</strong>：显示「-」，无法进行发布操作</div>
+                        </div>
+                        <div class="prd-status-item">
+                            <div class="prd-status-dot dot-published"></div>
+                            <div><strong>已发布</strong>：同步到市场，编辑/删除按钮禁用，hover提示「请下架后操作」</div>
+                        </div>
+                        <div class="prd-status-item">
+                            <div class="prd-status-dot dot-unpublished"></div>
+                            <div><strong>未发布</strong>：可发布 / 可编辑 / 可删除（二次确认）</div>
+                        </div>
+                    </div>
+
+                    <div class="prd-warn"> 注意：每次编辑行为都刷新列表字段，重新进行扫描。</div>
+                </div>
+            </div>
+
+        </div><!-- end prd-body -->
+    </div><!-- end prd-sidebar -->
+
+    <!-- 主内容区 -->
+    <div class="main-content">
+        <!-- 首页 -->
+        <div class="home-page" id="homePage">
+            <!-- 搜索栏 -->
+            <div class="search-bar">
+                <div class="search-input-wrap">
+                    <span class="search-icon"></span>
+                    <input type="text" class="search-input" placeholder="搜索作者用户名 / 组件名 / 描述...">
+                </div>
+            </div>
+            
+            <!-- Banner -->
+            <div class="banner" id="banner">
+                <div class="banner-slides" id="bannerSlides">
+                    <div class="banner-slide" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <div class="banner-content">
+                            <div class="banner-tag"> Agent</div>
+                            <h1 class="banner-title">智能体（Agent）</h1>
+                            <p class="banner-desc">具备自主规划、推理与执行能力的 AI 助手。能够理解复杂目标、拆解任务步骤、调用工具并完成端到端的工作流程。</p>
+                        </div>
+                    </div>
+                    <div class="banner-slide" style="background: linear-gradient(135deg, #319795 0%, #38b2ac 100%);">
+                        <div class="banner-content">
+                            <div class="banner-tag"> Plugin</div>
+                            <h1 class="banner-title">插件（Plugin）</h1>
+                            <p class="banner-desc">Agent 能力的模块化扩展。每个插件封装特定功能或集成第三方服务，Agent 可按需调用。</p>
+                        </div>
+                    </div>
+                    <div class="banner-slide" style="background: linear-gradient(135deg, #805ad5 0%, #9f7aea 100%);">
+                        <div class="banner-content">
+                            <div class="banner-tag"> Skill</div>
+                            <h1 class="banner-title">技能（Skill）</h1>
+                            <p class="banner-desc">领域知识、标准化工作流和专用工具集的合集。每个 Skill 聚焦单一场景，如代码开发、内容创作、数据分析等。</p>
+                        </div>
+                    </div>
+                    <div class="banner-slide" style="background: linear-gradient(135deg, #d69e2e 0%, #ecc94b 100%);">
+                        <div class="banner-content">
+                            <div class="banner-tag"> MCP</div>
+                            <h1 class="banner-title">模型上下文协议</h1>
+                            <p class="banner-desc">连接 AI 与外部工具、数据源的标准通信协议。定义 AI 调用工具、获取上下文、管理资源的统一规范。</p>
+                        </div>
+                    </div>
+                    <div class="banner-slide" style="background: linear-gradient(135deg, #e53e3e 0%, #fc8181 100%);">
+                        <div class="banner-content">
+                            <div class="banner-tag"> Rules</div>
+                            <h1 class="banner-title">规则（Rules）</h1>
+                            <p class="banner-desc">用户为 AI 行为设定的约束与指导框架。通过预定义的工作边界、偏好设置和质量标准，确保 AI 输出符合预期。</p>
+                        </div>
+                    </div>
+                    <div class="banner-slide" style="background: linear-gradient(135deg, #718096 0%, #a0aec0 100%);">
+                        <div class="banner-content">
+                            <div class="banner-tag"> Command</div>
+                            <h1 class="banner-title">指令（Command）</h1>
+                            <p class="banner-desc">用户与 AI 交互的触发机制。通过自然语言或预设指令格式，即时唤醒特定功能、切换工作模式或调用工具链。</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="banner-indicators" id="bannerIndicators"></div>
+            </div>
+            
+            <!-- 资产类型模块 -->
+            <div class="asset-sections">
+                <!-- Agent 模块 -->
+                <div class="asset-section">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <div class="icon color-agent"></div>
+                            <h2>Agent 智能体</h2>
+                        </div>
+                        <div class="section-actions">
+                            <button class="refresh-btn" onclick="refreshCards('agent')"> 换一批</button>
+                            <a href="#" class="more-link" onclick="switchPage('agent')">查看更多 →</a>
+                        </div>
+                    </div>
+                    <div class="card-grid" id="agentCards"></div>
+                </div>
+                
+                <!-- Plugin 模块 -->
+                <div class="asset-section">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <div class="icon color-plugin"></div>
+                            <h2>Plugin 插件</h2>
+                        </div>
+                        <div class="section-actions">
+                            <button class="refresh-btn" onclick="refreshCards('plugin')"> 换一批</button>
+                            <a href="#" class="more-link" onclick="switchPage('plugin')">查看更多 →</a>
+                        </div>
+                    </div>
+                    <div class="card-grid" id="pluginCards"></div>
+                </div>
+                
+                <!-- Skill 模块 -->
+                <div class="asset-section">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <div class="icon color-skill"></div>
+                            <h2>Skill 技能</h2>
+                        </div>
+                        <div class="section-actions">
+                            <button class="refresh-btn" onclick="refreshCards('skill')"> 换一批</button>
+                            <a href="#" class="more-link" onclick="switchPage('skill')">查看更多 →</a>
+                        </div>
+                    </div>
+                    <div class="card-grid" id="skillCards"></div>
+                </div>
+                
+                <!-- MCP 模块 -->
+                <div class="asset-section">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <div class="icon color-mcp"></div>
+                            <h2>MCP 模型上下文协议</h2>
+                        </div>
+                        <div class="section-actions">
+                            <button class="refresh-btn" onclick="refreshCards('mcp')">换一批</button>
+                            <a href="#" class="more-link" onclick="switchPage('mcp')">查看更多 →</a>
+                        </div>
+                    </div>
+                    <div class="card-grid" id="mcpCards"></div>
+                </div>
+                
+                <!-- Rules 模块 -->
+                <div class="asset-section">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <div class="icon color-rules"></div>
+                            <h2>Rules 规则</h2>
+                        </div>
+                        <div class="section-actions">
+                            <button class="refresh-btn" onclick="refreshCards('rules')"> 换一批</button>
+                            <a href="#" class="more-link" onclick="switchPage('rules')">查看更多 →</a>
+                        </div>
+                    </div>
+                    <div class="card-grid" id="rulesCards"></div>
+                </div>
+                
+                <!-- Command 模块 -->
+                <div class="asset-section">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <div class="icon color-command"></div>
+                            <h2>Command 指令</h2>
+                        </div>
+                        <div class="section-actions">
+                            <button class="refresh-btn" onclick="refreshCards('command')"> 换一批</button>
+                            <a href="#" class="more-link" onclick="switchPage('command')">查看更多 →</a>
+                        </div>
+                    </div>
+                    <div class="card-grid" id="commandCards"></div>
+                </div>
+                
+                <!-- 最佳实践模块 -->
+                <div class="asset-section">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <div class="icon color-best"></div>
+                            <h2>最佳实践</h2>
+                        </div>
+                        <div class="section-actions">
+                            <button class="refresh-btn" onclick="refreshCards('best')"> 换一批</button>
+                            <a href="#" class="more-link" onclick="switchPage('best')">查看更多 →</a>
+                        </div>
+                    </div>
+                    <div class="card-grid" id="bestCards"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 广场页面 -->
+        <div class="square-page" id="squarePage">
+            <div class="square-banner" id="squareBanner">
+                <div>
+                    <h1 class="square-banner-title" id="squareTitle">Agent 广场</h1>
+                    <p class="square-banner-desc" id="squareDesc">智能体（Agent）是具备自主规划、推理与执行能力的 AI 助手。</p>
+                </div>
+            </div>
+            
+            <!-- 搜索栏 -->
+            <div class="search-bar">
+                <div class="search-input-wrap">
+                    <span class="search-icon"></span>
+                    <input type="text" class="search-input" placeholder="搜索作者用户名 / 组件名 / 描述...">
+                </div>
+                <div class="sort-actions">
+                    <button class="sort-btn active" id="sortByTime" onclick="sortCards('date')">
+                         最新时间
+                    </button>
+                    <button class="sort-btn" id="sortByRating" onclick="sortCards('rating')">
+                        ⭐ 最高评分
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 卡片列表 -->
+            <div class="asset-sections">
+                <div class="card-grid" id="squareCards"></div>
+            </div>
+        </div>
+        
+        <!-- 管理后台 -->
+        <div class="admin-page" id="adminPage">
+            <div class="admin-header">
+                <div class="admin-tabs" id="adminTabs">
+                    <div class="admin-tab active" data-tab="all">全部</div>
+                    <div class="admin-tab" data-tab="created">我创建的</div>
+                </div>
+                <div class="admin-filters">
+                    <input type="text" class="search-input" placeholder="搜索组件名称 / 用户名 / 邮箱" style="max-width: 300px;">
+                    <select class="filter-select" id="filterType">
+                        <option value="">全部类型</option>
+                        <option value="agent">Agent</option>
+                        <option value="plugin">Plugin</option>
+                        <option value="skill">Skill</option>
+                        <option value="mcp">MCP</option>
+                        <option value="rules">Rules</option>
+                        <option value="command">Command</option>
+                        <option value="best">最佳实践</option>
+                    </select>
+                    <select class="filter-select" id="filterScan">
+                        <option value="">全部扫描状态</option>
+                        <option value="pass">通过</option>
+                        <option value="fail">失败</option>
+                        <option value="scanning">扫描中</option>
+                    </select>
+                    <select class="filter-select" id="filterPublish">
+                        <option value="">全部发布状态</option>
+                        <option value="published">已发布</option>
+                        <option value="unpublished">未发布</option>
+                    </select>
+                </div>
+            </div>
+            
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>类型</th>
+                        <th>名称</th>
+                        <th>创建人</th>
+                        <th>所属部门</th>
+                        <th>创建时间</th>
+                        <th>扫描状态</th>
+                        <th>扫描完成时间</th>
+                        <th>是否发布</th>
+                        <th>发布人</th>
+                        <th>发布时间</th>
+                        <th>评分</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="adminTableBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- 上传弹窗 -->
+    <div class="upload-modal" id="uploadModal">
+        <div class="upload-modal-content">
+            <div class="upload-modal-header">
+                <h3> 上传 AI 组件</h3>
+                <button class="close-btn" onclick="closeUploadModal()">×</button>
+            </div>
+            <div style="padding: 24px;">
+                <!-- 上传表单内容 -->
+                <div style="display: flex; gap: 30px;">
+                    <!-- 左侧类型选择 -->
+                    <div style="width: 260px;">
+                        <div style="font-size: 14px; font-weight: 600; color: #666; margin-bottom: 16px;">资产类型</div>
+                        <div id="uploadTypeList"></div>
+                    </div>
+                    
+                    <!-- 右侧表单 -->
+                    <div style="flex: 1;">
+                        <h2 style="font-size: 18px; color: #1a365d; margin-bottom: 8px;" id="uploadFormTitle">上传 Agent 智能体</h2>
+                        <p style="font-size: 14px; color: #718096; margin-bottom: 24px;" id="uploadFormDesc">上传 JSON 配置文件，系统将自动解析名称和描述</p>
+                        
+                        <!-- 上传区域 -->
+                        <div style="margin-bottom: 24px;">
+                            <div style="font-size: 14px; font-weight: 600; color: #2d3748; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+                                📁 上传文件 <span style="font-weight: 400; color: #a0aec0; font-size: 12px;" id="uploadFileFormat">JSON 格式</span>
+                            </div>
+                            <div id="uploadZone" onclick="document.getElementById('fileInput').click()" style="border: 2px dashed #cbd5e0; border-radius: 10px; padding: 40px; text-align: center; cursor: pointer; background: #f7fafc; transition: all 0.2s;" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                                <div id="uploadZoneContent">
+                                    <div style="font-size: 40px; margin-bottom: 12px;" id="uploadZoneIcon"></div>
+                                    <div style="font-size: 15px; color: #2d3748; margin-bottom: 6px;">点击或拖拽文件到此处</div>
+                                    <div style="font-size: 12px; color: #a0aec0;" id="uploadZoneHint">支持 JSON 格式，点击选择文件</div>
+                                </div>
+                                <div id="uploadFileInfo" style="display: none; color: #38a169; font-weight: 500;">
+                                    ✓ <span id="uploadFileName"></span> <span onclick="removeUploadFile(event)" style="color: #e53e3e; cursor: pointer; margin-left: 8px;">×</span>
+                                </div>
+                            </div>
+                            <input type="file" id="fileInput" style="display: none;" onchange="handleFileSelect(this)">
+                        </div>
+                        
+                        <!-- 名称 -->
+                        <div style="margin-bottom: 20px;">
+                            <div style="font-size: 14px; font-weight: 600; color: #2d3748; margin-bottom: 8px;"> 名称 <span style="color: #e53e3e;">*</span></div>
+                            <div id="parsedNameCard" style="display: none; background: #f0fff4; border: 1px solid #9ae6b4; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <span style="font-size: 13px; font-weight: 600; color: #276749;">✓ 已从文件中解析</span>
+                                    <button onclick="toggleNameEdit()" style="font-size: 12px; color: #2c5282; background: none; border: none; cursor: pointer;"> 编辑</button>
+                                </div>
+                                <div id="parsedNameDisplay" style="font-size: 14px; color: #2d3748; background: white; padding: 8px; border-radius: 4px;"></div>
+                                <input type="text" id="editNameInput" style="display: none; width: 100%; padding: 8px; border: 1px solid #2c5282; border-radius: 4px; font-size: 14px;" maxlength="60">
+                            </div>
+                            <input type="text" id="nameInput" class="form-input" placeholder="请输入组件名称，4-60个字符" style="width: 100%; padding: 12px 16px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px;" maxlength="60">
+                            <div style="font-size: 12px; color: #a0aec0; margin-top: 6px;" id="nameHint">由系统自动解析，或手动填写</div>
+                        </div>
+                        
+                        <!-- 描述 -->
+                        <div style="margin-bottom: 20px;">
+                            <div style="font-size: 14px; font-weight: 600; color: #2d3748; margin-bottom: 8px;"> 描述 <span style="color: #e53e3e;">*</span></div>
+                            <div id="parsedDescCard" style="display: none; background: #f0fff4; border: 1px solid #9ae6b4; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <span style="font-size: 13px; font-weight: 600; color: #276749;">✓ 已从文件中解析</span>
+                                    <button onclick="toggleDescEdit()" style="font-size: 12px; color: #2c5282; background: none; border: none; cursor: pointer;"> 编辑</button>
+                                </div>
+                                <div id="parsedDescDisplay" style="font-size: 14px; color: #2d3748; background: white; padding: 8px; border-radius: 4px;"></div>
+                                <textarea id="editDescInput" style="display: none; width: 100%; padding: 8px; border: 1px solid #2c5282; border-radius: 4px; font-size: 14px; min-height: 60px;" maxlength="500"></textarea>
+                            </div>
+                            <textarea id="descInput" class="form-input" placeholder="请输入组件描述，20-500个字符" style="width: 100%; padding: 12px 16px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; min-height: 80px; resize: vertical;" maxlength="500"></textarea>
+                            <div style="font-size: 12px; color: #a0aec0; margin-top: 6px;" id="descHint">由系统自动解析，或手动填写</div>
+                        </div>
+                        
+                        <!-- 头像 -->
+                        <div style="margin-bottom: 24px;">
+                            <div style="font-size: 14px; font-weight: 600; color: #2d3748; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+                                 上传头像 <span style="font-weight: 400; color: #a0aec0; font-size: 12px;">（可选）</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 16px;">
+                                <div id="avatarPreview" style="width: 80px; height: 80px; border-radius: 12px; border: 2px dashed #cbd5e0; display: flex; align-items: center; justify-content: center; cursor: pointer; background: #f7fafc; overflow: hidden;" onclick="document.getElementById('avatarInput').click()">
+                                    <span style="font-size: 28px; color: #a0aec0;" id="avatarPlaceholder"></span>
+                                </div>
+                                <div>
+                                    <div style="font-size: 13px; color: #718096; margin-bottom: 4px;">点击上传图片</div>
+                                    <div style="font-size: 12px; color: #a0aec0;">支持 JPG、PNG 格式，建议 200x200 像素</div>
+                                    <div id="avatarFileInfo" style="display: none; font-size: 12px; color: #38a169; margin-top: 4px;">
+                                        <span id="avatarFileName"></span> <span onclick="removeAvatar(event)" style="color: #e53e3e; cursor: pointer; margin-left: 4px;">×</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <input type="file" id="avatarInput" style="display: none;" accept="image/jpeg,image/png" onchange="handleAvatarSelect(this)">
+                        </div>
+                        
+                        <!-- 标签 -->
+                        <div style="margin-bottom: 24px;">
+                            <div style="font-size: 14px; font-weight: 600; color: #2d3748; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+                                 选择标签 <span style="font-weight: 400; color: #a0aec0; font-size: 12px;" id="tagCountText">已选 0/3</span>
+                            </div>
+                            <div id="tagList" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+                        </div>
+                        
+                        <!-- 提交 -->
+                        <button id="submitBtn" onclick="handleSubmit()" disabled style="width: 100%; padding: 14px; background: #a0aec0; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: not-allowed;">
+                            提交审核
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 成功弹窗 -->
+    <div class="success-modal" id="successModal">
+        <div class="success-modal-content">
+            <div class="success-modal-icon">✓</div>
+            <h3 id="modalTitle">[组件] 上传成功！</h3>
+            <p>正在引导您前往管理后台查看</p>
+            <button class="success-modal-btn" onclick="goToManage()">
+                前往「管理后台 - 我创建的」
+            </button>
+        </div>
+    </div>
+    
+    <!-- 详情页 -->
+    <div class="detail-modal" id="detailModal">
+        <div class="detail-content">
+            <div class="detail-header">
+                <div class="detail-header-left">
+                    <div class="detail-avatar" id="detailAvatar">A</div>
+                    <div class="detail-title-wrap">
+                        <h2 class="detail-title" id="detailTitle">CodeHelper Pro</h2>
+                        <div class="detail-meta">
+                            <span class="detail-meta-item">
+                                <span id="detailTypeName">Agent</span>
+                            </span>
+                            <span class="detail-meta-item">
+                                <span id="detailAuthor">张三丰</span>
+                            </span>
+                            <span class="detail-meta-item">
+                                <span id="detailDate">2026-04-01</span>
+                            </span>
+                            <span class="detail-meta-item">
+                                <span id="detailRating">4.8</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <button class="detail-close" onclick="closeDetail()">×</button>
+            </div>
+            
+            <div class="detail-body">
+                <!-- 标签 -->
+                <div class="detail-section">
+                    <div class="detail-tags" id="detailTags">
+                        <span class="detail-tag">代码助手</span>
+                        <span class="detail-tag">效率工具</span>
+                        <span class="detail-tag">开发</span>
+                    </div>
+                </div>
+                
+                <!-- 正文详情 -->
+                <div class="detail-section">
+                    <div class="detail-desc" id="detailDesc">
+                        智能代码助手 - 支持多语言的AI编程辅助工具，提供代码补全、审查、Bug修复等功能。
+                    </div>
+                </div>
+            </div>
+            
+
+        </div>
+    </div>
+    
+    <script>
+        // ===== PRD 侧边栏逻辑 =====
+        let prdOpen = false;
+
+        function togglePrdSidebar() {
+            prdOpen ? closePrdSidebar() : openPrdSidebar();
+        }
+
+        function openPrdSidebar() {
+            prdOpen = true;
+            document.getElementById('prdSidebar').classList.add('open');
+            document.getElementById('prdOverlay').classList.add('show');
+            document.getElementById('prdToggleBtn').style.right = '520px';
+        }
+
+        function closePrdSidebar() {
+            prdOpen = false;
+            document.getElementById('prdSidebar').classList.remove('open');
+            document.getElementById('prdOverlay').classList.remove('show');
+            document.getElementById('prdToggleBtn').style.right = '0';
+        }
+
+        function togglePrdSection(header) {
+            const body = header.nextElementSibling;
+            const arrow = header.querySelector('.prd-section-arrow');
+            const isOpen = body.classList.contains('open');
+            body.classList.toggle('open', !isOpen);
+            arrow.classList.toggle('open', !isOpen);
+        }
+
+        function scrollToPrdSection(id) {
+            const sectionMap = {
+                bg: 'prd-bg',
+                overview: 'prd-overview',
+                home: 'prd-home',
+                upload: 'prd-upload',
+                square: 'prd-square',
+                detail: 'prd-detail',
+                admin: 'prd-admin',
+            };
+            const el = document.getElementById(sectionMap[id]);
+            if (!el) return;
+
+            // 确保该 section 展开
+            const body = el.querySelector('.prd-section-body');
+            const arrow = el.querySelector('.prd-section-arrow');
+            if (body && !body.classList.contains('open')) {
+                body.classList.add('open');
+                arrow && arrow.classList.add('open');
+            }
+
+            // 滚动到对应位置
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            // 更新目录高亮
+            document.querySelectorAll('.prd-toc-item').forEach((item, i) => {
+                item.classList.toggle('active', item.getAttribute('onclick').includes(`'${id}'`));
+            });
+        }
+
+        // 滚动时自动高亮目录
+        document.getElementById('prdBody').addEventListener('scroll', function() {
+            const sections = ['prd-bg','prd-overview','prd-home','prd-upload','prd-square','prd-detail','prd-admin'];
+            const idMap = { 'prd-bg':'bg','prd-overview':'overview','prd-home':'home','prd-upload':'upload','prd-square':'square','prd-detail':'detail','prd-admin':'admin' };
+            const bodyScrollTop = this.scrollTop;
+
+            let activeId = sections[0];
+            sections.forEach(secId => {
+                const el = document.getElementById(secId);
+                if (el && el.offsetTop - 20 <= bodyScrollTop) {
+                    activeId = secId;
+                }
+            });
+
+            document.querySelectorAll('.prd-toc-item').forEach(item => {
+                item.classList.toggle('active', item.getAttribute('onclick').includes(`'${idMap[activeId]}'`));
+            });
+        });
+
+        // ===== 原有页面逻辑 =====
+        // 页面状态
+        let currentPage = 'home';
+        let currentSquareType = 'agent';
+        let currentUploadType = 'agent';
+        let selectedTags = [];
+        
+        // 模拟数据
+        const mockData = {
+            agent: [
+                { name: 'CodeHelper Pro', author: '张三丰', desc: '智能代码助手 - 支持多语言的AI编程辅助工具，提供代码补全、审查、Bug修复等功能。', tags: ['代码助手', '效率工具', '开发'], rating: 4.8, date: '2026-04-01 14:32:15' },
+                { name: 'DataAnalyzer', author: '李四', desc: '数据可视化分析工具，支持多种图表类型一键生成。', tags: ['数据分析', '可视化'], rating: 4.5, date: '2026-03-28 09:18:42' },
+                { name: 'SmartReply', author: '王五', desc: '智能客服回复助手，自动生成符合语境的回复建议。', tags: ['客服', '自动化'], rating: 4.2, date: '2026-03-25 16:45:33' },
+                { name: 'DocWriter', author: '赵六', desc: '专业文档写作助手，支持多种文档格式导出。', tags: ['内容创作', '文档处理'], rating: 4.6, date: '2026-03-20 11:22:08' },
+            ],
+            plugin: [
+                { name: 'BrowserConnector', author: '孙七', desc: '浏览器扩展插件，实现网页内容快速抓取与分析。', tags: ['浏览器扩展', '数据集成'], rating: 4.3, date: '2026-04-02 08:55:27' },
+                { name: 'FileSync', author: '周八', desc: '文件同步插件，支持多设备间文件实时同步。', tags: ['文件系统', '自动化'], rating: 4.7, date: '2026-03-30 13:37:19' },
+                { name: 'APIGateway', author: '吴九', desc: 'API集成网关，统一管理第三方接口调用。', tags: ['API集成', '开发工具'], rating: 4.4, date: '2026-03-27 10:12:44' },
+                { name: 'NotifyCenter', author: '郑十', desc: '消息通知中心，支持多渠道推送集成。', tags: ['通知推送', '系统工具'], rating: 4.1, date: '2026-03-22 15:28:56' },
+            ],
+            skill: [
+                { name: 'PythonCoder', author: '钱一', desc: 'Python开发技能包，包含常用代码模板和最佳实践。', tags: ['代码开发', '语言翻译'], rating: 4.9, date: '2026-04-03 12:05:38' },
+                { name: 'DesignMaster', author: '孙二', desc: 'UI/UX设计技能集，快速生成设计稿和原型图。', tags: ['设计创意', '教育学习'], rating: 4.6, date: '2026-03-29 17:42:11' },
+                { name: 'ContentPro', author: '李三', desc: '专业内容创作技能，支持多种文体和风格。', tags: ['内容写作', '知识问答'], rating: 4.4, date: '2026-03-26 14:19:22' },
+                { name: 'DataScience', author: '周四', desc: '数据科学技能包，涵盖统计分析、机器学习等。', tags: ['数据分析', '代码开发'], rating: 4.8, date: '2026-03-23 09:33:47' },
+            ],
+            mcp: [
+                { name: 'DBConnector', author: '吴五', desc: '数据库连接器，支持主流关系型数据库快速接入。', tags: ['数据库连接', '本地工具调用'], rating: 4.5, date: '2026-04-01 10:27:53' },
+                { name: 'FileManager', author: '郑六', desc: '文件管理协议实现，提供安全的文件操作能力。', tags: ['文件管理', 'API调用'], rating: 4.3, date: '2026-03-28 15:08:34' },
+                { name: 'CloudStorage', author: '王七', desc: '云存储集成协议，支持主流云服务商对接。', tags: ['云服务集成', 'Web搜索'], rating: 4.2, date: '2026-03-25 11:55:16' },
+                { name: 'ToolCaller', author: '冯八', desc: '通用工具调用协议，统一管理工具注册与调用。', tags: ['API调用', '本地工具调用'], rating: 4.6, date: '2026-03-21 08:44:29' },
+            ],
+            rules: [
+                { name: 'CodeStandard', author: '陈九', desc: '代码规范检查规则，确保代码风格一致性。', tags: ['代码规范', '质量标准'], rating: 4.7, date: '2026-04-02 16:21:07' },
+                { name: 'WritingStyle', author: '楚十', desc: '写作风格指南，统一文档编写标准。', tags: ['写作风格', '品牌指南'], rating: 4.4, date: '2026-03-29 12:38:45' },
+                { name: 'SecurityPolicy', author: '卫一', desc: '安全策略规则集，包含常见安全漏洞检查。', tags: ['安全策略', '合规检查'], rating: 4.8, date: '2026-03-26 14:56:18' },
+                { name: 'QualityGate', author: '蒋二', desc: '质量门禁规则，自动卡点代码质量指标。', tags: ['质量标准', '合规检查'], rating: 4.5, date: '2026-03-23 10:15:33' },
+            ],
+            command: [
+                { name: 'QuickActions', author: '沈三', desc: '常用快捷指令集，一键触发复杂操作。', tags: ['快捷指令', '自动化流程'], rating: 4.6, date: '2026-04-03 13:48:22' },
+                { name: 'BatchProcessor', author: '韩四', desc: '批处理命令集，高效执行批量任务。', tags: ['批处理', '模板命令'], rating: 4.3, date: '2026-03-30 09:27:51' },
+                { name: 'WorkflowTriggers', author: '杨五', desc: '工作流触发器，快速启动预定义流程。', tags: ['自动化流程', '自定义触发'], rating: 4.5, date: '2026-03-27 15:11:39' },
+                { name: 'NLCommands', author: '朱六', desc: '自然语言命令集，用自然语言控制操作。', tags: ['自然语言', '快捷指令'], rating: 4.2, date: '2026-03-24 11:42:16' },
+            ],
+            best: [
+                { name: 'GettingStarted', author: '秦七', desc: 'WorkBuddy 入门指南，快速上手核心功能。', tags: ['入门教程', '使用指南'], rating: 4.9, date: '2026-04-01 08:30:44' },
+                { name: 'AdvancedTips', author: '尤八', desc: '高级使用技巧，提升工作效率的秘诀。', tags: ['进阶技巧', '性能优化'], rating: 4.7, date: '2026-03-28 14:22:57' },
+                { name: 'SecurityBest', author: '许九', desc: '安全加固最佳实践，保障系统安全。', tags: ['安全加固', '场景案例'], rating: 4.8, date: '2026-03-25 10:05:12' },
+                { name: 'PerformanceOpt', author: '何十', desc: '性能优化实战指南，解决性能瓶颈问题。', tags: ['性能优化', '进阶技巧'], rating: 4.6, date: '2026-03-22 16:38:28' },
+            ],
+        };
+        
+        // 类型配置
+        const typeConfig = {
+            agent: { icon: '', title: 'Agent', name: 'Agent', desc: '智能体（Agent）是具备自主规划、推理与执行能力的 AI 助手。', color: 'agent', format: 'JSON', accept: '.json', canParse: true, tags: ['效率工具', '自动化', '数据处理', '客服', '代码助手', '内容创作', '数据分析', '文档处理'] },
+            plugin: { icon: '', title: 'Plugin', name: 'Plugin', desc: '插件（Plugin）是 Agent 能力的模块化扩展。', color: 'plugin', format: 'ZIP', accept: '.zip', canParse: true, tags: ['开发工具', '浏览器扩展', '数据集成', 'API集成', '文件系统', '系统工具', '通知推送'] },
+            skill: { icon: '', title: 'Skill', name: 'Skill', desc: '技能（Skill）是领域知识、标准化工作流和专用工具集的合集。', color: 'skill', format: 'ZIP', accept: '.zip', canParse: true, tags: ['代码开发', '设计创意', '内容写作', '数据分析', '语言翻译', '知识问答', '教育学习'] },
+            mcp: { icon: '', title: 'MCP', name: 'MCP', desc: 'MCP 是连接 AI 与外部工具、数据源的标准通信协议。', color: 'mcp', format: 'JSON/YAML', accept: '.json,.yaml,.yml', canParse: true, tags: ['数据库连接', '文件管理', 'API调用', 'Web搜索', '云服务集成', '本地工具调用'] },
+            rules: { icon: '', title: 'Rules', name: 'Rules', desc: '规则（Rules）是用户为 AI 行为设定的约束与指导框架。', color: 'rules', format: 'YAML/MD', accept: '.yaml,.yml,.md', canParse: false, tags: ['代码规范', '写作风格', '品牌指南', '合规检查', '安全策略', '质量标准'] },
+            command: { icon: '', title: 'Command', name: 'Command', desc: '指令（Command）是用户与 AI 交互的触发机制。', color: 'command', format: 'JSON', accept: '.json', canParse: true, tags: ['快捷指令', '自然语言', '批处理', '自动化流程', '自定义触发', '模板命令'] },
+            best: { icon: '', title: '最佳实践', name: '最佳实践', desc: '最佳实践中心收录各类使用指南和场景案例。', color: 'best', format: 'Markdown', accept: '.md', canParse: false, tags: ['使用指南', '入门教程', '进阶技巧', '场景案例', '性能优化', '安全加固'] },
+        };
+        
+        // 初始化
+        function init() {
+            initBanner();
+            renderAllCards();
+            initNav();
+            initUploadModal();
+            renderAdminTable();
+        }
+        
+        // Banner 轮播
+        let currentSlide = 0;
+        function initBanner() {
+            const slides = ['agent', 'plugin', 'skill', 'mcp', 'rules', 'command'];
+            const container = document.getElementById('bannerIndicators');
+            slides.forEach((_, i) => {
+                const dot = document.createElement('div');
+                dot.className = 'banner-dot' + (i === 0 ? ' active' : '');
+                dot.onclick = () => goToSlide(i);
+                container.appendChild(dot);
+            });
+            setInterval(() => {
+                currentSlide = (currentSlide + 1) % 6;
+                updateSlide();
+            }, 5000);
+        }
+        
+        function goToSlide(index) {
+            currentSlide = index;
+            updateSlide();
+        }
+        
+        function updateSlide() {
+            const slides = document.getElementById('bannerSlides');
+            slides.style.transform = `translateX(-${currentSlide * 100}%)`;
+            document.querySelectorAll('.banner-dot').forEach((dot, i) => {
+                dot.className = 'banner-dot' + (i === currentSlide ? ' active' : '');
+            });
+        }
+        
+        // 渲染卡片
+        function renderCard(item, type) {
+            const firstChar = item.name.charAt(0).toUpperCase();
+            return `
+                <div class="asset-card" onclick="showDetail('${type}', '${item.name}')">
+                    <div class="card-header">
+                        <div class="card-avatar color-${type}">${firstChar}</div>
+                        <div class="card-info">
+                            <div class="card-title">${item.name}</div>
+                        </div>
+                    </div>
+                    <div class="card-tags">
+                        ${item.tags.slice(0, 3).map(t => `<span class="card-tag">${t}</span>`).join('')}
+                    </div>
+                    <div class="card-desc">${item.desc.substring(0, 60)}...</div>
+                    <div class="card-footer">
+                        <div class="card-footer-left">
+                            <span> ${item.author}</span>
+                            <span> ${item.date}</span>
+                        </div>
+                        <span class="card-rating">⭐ ${item.rating}</span>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderAllCards() {
+            Object.keys(mockData).forEach(type => {
+                const container = document.getElementById(`${type}Cards`);
+                if (container) {
+                    container.innerHTML = mockData[type].map(item => renderCard(item, type)).join('');
+                }
+            });
+        }
+        
+        function refreshCards(type) {
+            const data = mockData[type];
+            const shuffled = [...data].sort(() => Math.random() - 0.5);
+            const container = document.getElementById(`${type}Cards`);
+            container.innerHTML = shuffled.map(item => renderCard(item, type)).join('');
+        }
+        
+        // 导航
+        function initNav() {
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.onclick = () => switchPage(item.dataset.page);
+            });
+        }
+        
+        function switchPage(page) {
+            currentPage = page;
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.className = 'nav-item' + (item.dataset.page === page ? ' active' : '');
+            });
+            
+            document.getElementById('homePage').className = 'home-page' + (page === 'home' ? '' : ' hidden');
+            document.getElementById('squarePage').className = 'square-page' + (['agent', 'plugin', 'skill', 'mcp', 'rules', 'command', 'best'].includes(page) ? ' active' : '');
+            document.getElementById('adminPage').className = 'admin-page' + (page === 'admin' ? ' active' : '');
+            
+            if (['agent', 'plugin', 'skill', 'mcp', 'rules', 'command', 'best'].includes(page)) {
+                currentSquareType = page;
+                updateSquare();
+            }
+        }
+        
+        function updateSquare() {
+            const config = typeConfig[currentSquareType];
+            document.getElementById('squareBanner').style.background = `linear-gradient(135deg, var(--bg-start, #1a365d) 0%, var(--bg-end, #2c5282) 100%)`;
+            document.getElementById('squareBanner').style.setProperty('--bg-start', { agent: '#667eea', plugin: '#319795', skill: '#805ad5', mcp: '#d69e2e', rules: '#e53e3e', command: '#718096', best: '#38a169' }[currentSquareType]);
+            document.getElementById('squareBanner').style.setProperty('--bg-end', { agent: '#764ba2', plugin: '#38b2ac', skill: '#9f7aea', mcp: '#ecc94b', rules: '#fc8181', command: '#a0aec0', best: '#48bb78' }[currentSquareType]);
+            document.getElementById('squareTitle').textContent = `${config.icon} ${config.name} 广场`;
+            document.getElementById('squareDesc').textContent = config.desc;
+            
+            // 渲染卡片（使用当前排序状态）
+            renderSquareCards(currentSortType);
+        }
+        
+        // 当前排序类型
+        let currentSortType = 'date';
+        
+        // 排序卡片
+        function sortCards(type) {
+            currentSortType = type;
+            
+            // 更新按钮状态
+            document.getElementById('sortByTime').className = 'sort-btn' + (type === 'date' ? ' active' : '');
+            document.getElementById('sortByRating').className = 'sort-btn' + (type === 'rating' ? ' active' : '');
+            
+            // 渲染卡片
+            renderSquareCards(type);
+        }
+        
+        function renderSquareCards(sortType) {
+            const container = document.getElementById('squareCards');
+            let sortedData = [...mockData[currentSquareType]];
+            
+            if (sortType === 'date') {
+                // 按时间排序（最新的在前）
+                sortedData.sort((a, b) => new Date(b.date) - new Date(a.date));
+            } else if (sortType === 'rating') {
+                // 按评分排序（最高的在前）
+                sortedData.sort((a, b) => b.rating - a.rating);
+            }
+            
+            container.innerHTML = sortedData.map(item => renderCard(item, currentSquareType)).join('');
+        }
+        
+        // 上传弹窗
+        function initUploadModal() {
+            const list = document.getElementById('uploadTypeList');
+            list.innerHTML = Object.keys(typeConfig).map(type => `
+                <div class="type-card" data-type="${type}" onclick="selectUploadType('${type}')" style="background: white; border: 2px solid #e2e8f0; border-radius: 10px; padding: 12px 16px; margin-bottom: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.2s;">
+                    <div class="type-icon color-${type}" style="width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px;">${typeConfig[type].icon}</div>
+                    <div>
+                        <div style="font-size: 14px; font-weight: 600; color: #2d3748;">${typeConfig[type].name}</div>
+                        <div style="font-size: 11px; color: #718096;">${typeConfig[type].format}</div>
+                    </div>
+                </div>
+            `).join('');
+            selectUploadType('agent');
+        }
+        
+        function selectUploadType(type) {
+            currentUploadType = type;
+            document.querySelectorAll('#uploadTypeList .type-card').forEach(card => {
+                card.style.borderColor = card.dataset.type === type ? '#2c5282' : '#e2e8f0';
+                card.style.background = card.dataset.type === type ? '#f7fafc' : 'white';
+            });
+            
+            const config = typeConfig[type];
+            document.getElementById('uploadFormTitle').textContent = `上传 ${config.name}`;
+            document.getElementById('uploadFormDesc').textContent = config.desc;
+            document.getElementById('uploadFileFormat').textContent = `${config.format} 格式`;
+            document.getElementById('uploadZoneIcon').textContent = '';
+            document.getElementById('uploadZoneHint').textContent = `支持 ${config.format} 格式，点击选择文件`;
+            document.getElementById('fileInput').accept = config.accept;
+            
+            // 渲染标签
+            const tagList = document.getElementById('tagList');
+            tagList.innerHTML = config.tags.map(tag => `
+                <div class="tag-chip" onclick="toggleTag(this, '${tag}')" style="padding: 6px 12px; border-radius: 6px; font-size: 13px; border: 1px solid #e2e8f0; background: white; cursor: pointer; transition: all 0.15s;">${tag}</div>
+            `).join('');
+            
+            // 重置表单
+            resetUploadForm();
+        }
+        
+        function openUploadModal() {
+            document.getElementById('uploadModal').classList.add('show');
+        }
+        
+        function closeUploadModal() {
+            document.getElementById('uploadModal').classList.remove('show');
+        }
+        
+        function resetUploadForm() {
+            selectedTags = [];
+            document.getElementById('uploadZoneContent').style.display = 'block';
+            document.getElementById('uploadFileInfo').style.display = 'none';
+            document.getElementById('parsedNameCard').style.display = 'none';
+            document.getElementById('parsedDescCard').style.display = 'none';
+            document.getElementById('nameInput').value = '';
+            document.getElementById('descInput').value = '';
+            document.getElementById('nameInput').style.display = 'block';
+            document.getElementById('descInput').style.display = 'block';
+            document.getElementById('nameHint').textContent = '由系统自动解析，或手动填写';
+            document.getElementById('descHint').textContent = '由系统自动解析，或手动填写';
+            document.querySelectorAll('#tagList .tag-chip').forEach(chip => chip.classList.remove('selected'));
+            document.getElementById('tagCountText').textContent = '已选 0/3';
+            // 重置头像
+            resetAvatar();
+            updateSubmitBtn();
+        }
+        
+        // 头像相关
+        let currentAvatar = null;
+        
+        function handleAvatarSelect(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            // 验证文件类型
+            if (!['image/jpeg', 'image/png'].includes(file.type)) {
+                alert('仅支持 JPG、PNG 格式');
+                return;
+            }
+            
+            // 验证文件大小（最大2MB）
+            if (file.size > 2 * 1024 * 1024) {
+                alert('图片大小不能超过 2MB');
+                return;
+            }
+            
+            currentAvatar = file;
+            
+            // 显示预览
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('avatarPreview');
+                preview.innerHTML = `<img src="${e.target.result}" style="width: 100%; height: 100%; object-fit: cover;">`;
+                preview.style.border = '2px solid #2c5282';
+                preview.style.borderStyle = 'solid';
+            };
+            reader.readAsDataURL(file);
+            
+            // 显示文件名
+            document.getElementById('avatarFileName').textContent = file.name;
+            document.getElementById('avatarFileInfo').style.display = 'block';
+        }
+        
+        function removeAvatar(e) {
+            e.stopPropagation();
+            resetAvatar();
+            document.getElementById('avatarInput').value = '';
+        }
+        
+        function resetAvatar() {
+            currentAvatar = null;
+            const preview = document.getElementById('avatarPreview');
+            preview.innerHTML = '<span style="font-size: 28px; color: #a0aec0;" id="avatarPlaceholder"></span>';
+            preview.style.border = '2px dashed #cbd5e0';
+            document.getElementById('avatarFileInfo').style.display = 'none';
+        }
+        
+        function handleFileSelect(input) {
+            const file = input.files[0];
+            if (file) processUploadFile(file);
+        }
+        
+        function handleDrop(e) {
+            e.preventDefault();
+            const file = e.dataTransfer.files[0];
+            if (file) processUploadFile(file);
+        }
+        
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.target.style.borderColor = '#2c5282';
+        }
+        
+        function handleDragLeave(e) {
+            e.preventDefault();
+            e.target.style.borderColor = '#cbd5e0';
+        }
+        
+        function processUploadFile(file) {
+            document.getElementById('uploadFileName').textContent = file.name;
+            document.getElementById('uploadZoneContent').style.display = 'none';
+            document.getElementById('uploadFileInfo').style.display = 'block';
+            
+            const config = typeConfig[currentUploadType];
+            if (config.canParse) {
+                setTimeout(() => {
+                    document.getElementById('parsedNameCard').style.display = 'block';
+                    document.getElementById('parsedNameDisplay').textContent = 'CodeHelper Pro';
+                    document.getElementById('editNameInput').value = 'CodeHelper Pro';
+                    document.getElementById('nameInput').style.display = 'none';
+                    
+                    document.getElementById('parsedDescCard').style.display = 'block';
+                    document.getElementById('parsedDescDisplay').textContent = '智能代码助手 - 支持多语言的AI编程辅助工具，提供代码补全、审查、Bug修复等功能。';
+                    document.getElementById('editDescInput').value = '智能代码助手 - 支持多语言的AI编程辅助工具，提供代码补全、审查、Bug修复等功能。';
+                    document.getElementById('descInput').style.display = 'none';
+                    
+                    document.getElementById('nameHint').textContent = '已自动解析，可点击编辑修改';
+                    document.getElementById('descHint').textContent = '已自动解析，可点击编辑修改';
+                    updateSubmitBtn();
+                }, 500);
+            } else {
+                document.getElementById('nameHint').textContent = '请手动填写，4-60个字符';
+                document.getElementById('descHint').textContent = '请手动填写，20-500个字符';
+                updateSubmitBtn();
+            }
+        }
+        
+        function removeUploadFile(e) {
+            e.stopPropagation();
+            document.getElementById('uploadFileInfo').style.display = 'none';
+            document.getElementById('uploadZoneContent').style.display = 'block';
+            document.getElementById('fileInput').value = '';
+            resetUploadForm();
+        }
+        
+        function toggleNameEdit() {
+            const display = document.getElementById('parsedNameDisplay');
+            const input = document.getElementById('editNameInput');
+            if (display.style.display !== 'none') {
+                display.style.display = 'none';
+                input.style.display = 'block';
+                input.focus();
+            } else {
+                display.style.display = 'block';
+                input.style.display = 'none';
+            }
+        }
+        
+        function toggleDescEdit() {
+            const display = document.getElementById('parsedDescDisplay');
+            const input = document.getElementById('editDescInput');
+            if (display.style.display !== 'none') {
+                display.style.display = 'none';
+                input.style.display = 'block';
+                input.focus();
+            } else {
+                display.style.display = 'block';
+                input.style.display = 'none';
+            }
+        }
+        
+        function toggleTag(chip, tag) {
+            if (chip.classList.contains('selected')) {
+                chip.classList.remove('selected');
+                chip.style.background = 'white';
+                chip.style.borderColor = '#e2e8f0';
+                chip.style.color = '#4a5568';
+                selectedTags = selectedTags.filter(t => t !== tag);
+            } else if (selectedTags.length < 3) {
+                chip.classList.add('selected');
+                chip.style.background = '#2c5282';
+                chip.style.borderColor = '#2c5282';
+                chip.style.color = 'white';
+                selectedTags.push(tag);
+            }
+            document.getElementById('tagCountText').textContent = `已选 ${selectedTags.length}/3`;
+            updateSubmitBtn();
+        }
+        
+        function updateSubmitBtn() {
+            const name = getNameValue();
+            const desc = getDescValue();
+            const btn = document.getElementById('submitBtn');
+            const canSubmit = selectedTags.length > 0 && name.length >= 4 && desc.length >= 20;
+            btn.disabled = !canSubmit;
+            btn.style.background = canSubmit ? '#2c5282' : '#a0aec0';
+            btn.style.cursor = canSubmit ? 'pointer' : 'not-allowed';
+        }
+        
+        function getNameValue() {
+            const parsed = document.getElementById('parsedNameDisplay');
+            const edit = document.getElementById('editNameInput');
+            const input = document.getElementById('nameInput');
+            if (parsed.style.display !== 'none' && parsed.textContent) return parsed.textContent;
+            if (edit.style.display !== 'none' && edit.value) return edit.value;
+            return input.value;
+        }
+        
+        function getDescValue() {
+            const parsed = document.getElementById('parsedDescDisplay');
+            const edit = document.getElementById('editDescInput');
+            const input = document.getElementById('descInput');
+            if (parsed.style.display !== 'none' && parsed.textContent) return parsed.textContent;
+            if (edit.style.display !== 'none' && edit.value) return edit.value;
+            return input.value;
+        }
+        
+        document.getElementById('nameInput').addEventListener('input', updateSubmitBtn);
+        document.getElementById('descInput').addEventListener('input', updateSubmitBtn);
+        document.getElementById('editNameInput').addEventListener('input', updateSubmitBtn);
+        document.getElementById('editDescInput').addEventListener('input', updateSubmitBtn);
+        
+        function handleSubmit() {
+            const config = typeConfig[currentUploadType];
+            document.getElementById('modalTitle').textContent = `[${config.name}] 上传成功！`;
+            document.getElementById('successModal').classList.add('show');
+            closeUploadModal();
+        }
+        
+        function goToManage() {
+            document.getElementById('successModal').classList.remove('show');
+            switchPage('admin');
+            // 切换到"我创建的"tab
+            document.querySelectorAll('#adminTabs .admin-tab').forEach(tab => {
+                tab.className = 'admin-tab' + (tab.dataset.tab === 'created' ? ' active' : '');
+            });
+        }
+        
+        // 管理后台
+        function renderAdminTable() {
+            const tbody = document.getElementById('adminTableBody');
+            const allItems = [];
+            Object.keys(mockData).forEach(type => {
+                mockData[type].forEach(item => {
+                    allItems.push({ ...item, type, status: ['pass', 'fail', 'scanning'][Math.floor(Math.random() * 3)], published: Math.random() > 0.5 ? 'published' : 'unpublished' });
+                });
+            });
+            
+            tbody.innerHTML = allItems.slice(0, 10).map(item => `
+                <tr>
+                    <td><span class="card-tag">${typeConfig[item.type].icon} ${typeConfig[item.type].name}</span></td>
+                    <td><a href="#" style="color: #2c5282; cursor: pointer;" onclick="showDetail('${item.type}', '${item.name}'); return false;">${item.name}</a></td>
+                    <td>${item.author}</td>
+                    <td>技术部</td>
+                    <td>${item.date}</td>
+                    <td><span class="status-badge status-${item.status}">${item.status === 'pass' ? '通过' : item.status === 'fail' ? '失败' : '扫描中'}</span></td>
+                    <td>${item.status !== 'scanning' ? item.date : '-'}</td>
+                    <td><span class="status-badge status-${item.published}">${item.published === 'published' ? '已发布' : '未发布'}</span></td>
+                    <td>${item.published === 'published' ? '管理员' : '-'}</td>
+                    <td>${item.published === 'published' ? item.date : '-'}</td>
+                    <td>⭐ ${item.rating}</td>
+                    <td>
+                        <button class="action-btn edit" ${item.published === 'published' ? 'disabled title="数据已发布，请下架后进行操作"' : ''}>编辑</button>
+                        <button class="action-btn delete" ${item.published === 'published' ? 'disabled title="数据已发布，请下架后进行操作"' : ''}>删除</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        function showDetail(type, name) {
+            // 查找对应的数据
+            const item = mockData[type].find(i => i.name === name);
+            if (!item) return;
+            
+            const config = typeConfig[type];
+            
+            // 设置头像
+            const avatar = document.getElementById('detailAvatar');
+            avatar.textContent = name.charAt(0).toUpperCase();
+            avatar.style.background = getGradientColor(type);
+            
+            // 设置基本信息
+            document.getElementById('detailTitle').textContent = name;
+            document.getElementById('detailTypeIcon').textContent = config.icon;
+            document.getElementById('detailTypeName').textContent = config.name;
+            document.getElementById('detailAuthor').textContent = item.author;
+            document.getElementById('detailDate').textContent = item.date;
+            document.getElementById('detailRating').textContent = item.rating;
+            
+            // 设置标签
+            document.getElementById('detailTags').innerHTML = item.tags.map(tag => 
+                `<span class="detail-tag">${tag}</span>`
+            ).join('');
+            
+            // 设置正文详情
+            document.getElementById('detailDesc').textContent = item.desc;
+            
+            // 保存当前详情数据
+            currentDetail = { type, name, item, config };
+            
+            // 显示详情弹窗
+            document.getElementById('detailModal').classList.add('show');
+        }
+        
+        function closeDetail() {
+            document.getElementById('detailModal').classList.remove('show');
+        }
+        
+        function useAsset() {
+            alert(`正在使用：${currentDetail.name}\n类型：${currentDetail.config.name}\n\n（原型演示，实际将跳转到使用页面）`);
+            closeDetail();
+        }
+        
+        function getGradientColor(type) {
+            const colors = {
+                agent: 'linear-gradient(135deg, #667eea, #764ba2)',
+                plugin: 'linear-gradient(135deg, #319795, #38b2ac)',
+                skill: 'linear-gradient(135deg, #805ad5, #9f7aea)',
+                mcp: 'linear-gradient(135deg, #d69e2e, #ecc94b)',
+                rules: 'linear-gradient(135deg, #e53e3e, #fc8181)',
+                command: 'linear-gradient(135deg, #718096, #a0aec0)',
+                best: 'linear-gradient(135deg, #38a169, #48bb78)',
+            };
+            return colors[type] || colors.agent;
+        }
+        
+        // 当前详情数据
+        let currentDetail = {};
+        
+        // 初始化
+        init();
+    </script>
+</body>
+</html>
